@@ -116,7 +116,7 @@ public class Main {
      */
     private static char getBoardElement(char[][] board, int[] position) {
         if (!isValidBoard(board))
-            throw new IllegalArgumentException("Incorrect Board");
+            throw new IllegalArgumentException("Incorrect boards.Board");
         if (!isValidPosition(position))
             throw new IllegalArgumentException("Incorrect Position");
         return board[position[1]][position[0]];
@@ -131,7 +131,7 @@ public class Main {
      */
     private static void setBoardElement(char[][] board, int[] position, char value) {
         if (!isValidBoard(board))
-            throw new IllegalArgumentException("Incorrect Board");
+            throw new IllegalArgumentException("Incorrect boards.Board");
         if (!isValidPosition(position))
             throw new IllegalArgumentException("Incorrect Position");
         board[position[1]][position[0]] = value;
