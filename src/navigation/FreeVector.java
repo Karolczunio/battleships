@@ -44,7 +44,7 @@ public record FreeVector(int x, int y) {
      * The method adds argument FreeVector to this FreeVector and returns their sum
      *
      * @param vector FreeVector to be added to this FreeVector
-     * @return sum of this FreeVector and argument Freevector
+     * @return sum of this FreeVector and argument FreeVector
      */
     public FreeVector add(FreeVector vector) {
         return new FreeVector(this.x() + vector.x(), this.y() + vector.y());
@@ -54,7 +54,7 @@ public record FreeVector(int x, int y) {
      * The method subtracts argument FreeVector from this FreeVector and returns their difference
      *
      * @param vector FreeVector to be subtracted from this FreeVector
-     * @return difference of this FreeVector and argument Freevector
+     * @return difference of this FreeVector and argument FreeVector
      */
     public FreeVector subtract(FreeVector vector) {
         return new FreeVector(this.x() - vector.x(), this.y() - vector.y());

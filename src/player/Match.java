@@ -9,12 +9,9 @@ import navigation.Position;
 public class Match {
     private Player currentPlayer;
     private Player anotherPlayer;
-    private final static ShipCount[] shipCounts = {
-            new ShipCount(5, 1),
-            new ShipCount(1, 3),
-            new ShipCount(3, 2),
-            new ShipCount(4, 1)
-    };
+    //every number in ships array is a size of a ship that should be placed
+    private final static int[] numberOfTiles = {5, 1, 1, 1, 3, 3, 4};
+    private final static int[] shipIds = {1, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6};
 
     private Match(Player player1, Player player2) {
         this.currentPlayer = player1;
@@ -24,49 +21,32 @@ public class Match {
     private static Board getBoardWithShipsPlaced(Player player) {
         Board board = Board.getEmptyBoard();
         BoundVector placement;
-        int nr = 0;
-        for (ShipCount shipCount : shipCounts) {
-            for (int j = 0; j < shipCount.numberOfShips(); j++) {
-                placement = player.supplyShipPlacement(shipCount.numberOfTiles(), board);
-                //if (!Helper.isValidShipPlacement(shipCount.numberOfTiles(), placement, board)) {
-                    //throw new IllegalStateException("Player provided incorrect implementation of supplyShipPlacement method");
-                //}
-                board = getBoardWithShipPlaced(nr++, placement, board);
-                //when using input from the user only the last iteration throws an exception
-                //usually there is a different exception every time I run the program
-                //sometimes there is no exception
-                //when using the same each time automatically I still get different exception
-                //everytime I run the program
+        for (int i = 0; i < shipIds.length; i++) {
+            placement = player.supplyShipPlacement(numberOfTiles[i], board);
+            if (!Helper.isValidShipPlacement(numberOfTiles[i], placement, board)) {
+                throw new IllegalStateException("Player provided incorrect implementation of supplyShipPlacement method");
             }
+            board = getBoardWithShipPlaced(shipIds[i], placement, board);
         }
         return board;
     }
 
-    private static Board getBoardWithShipPlaced(int nr, BoundVector placement, Board board) {
-        if (nr < 0) {
-            throw new IllegalArgumentException("Ship number needs to be an unsigned integer");
-        }
+    private static Board getBoardWithShipPlaced(int id, BoundVector placement, Board board) {
         return board
-                .getModifiedBoard(element -> element.getWithChangedPart(Part.SHIP).getWithChangedId(1 << nr),
+                .getModifiedBoard(element -> element.getWithChangedPart(Part.SHIP).getWithChangedId(id),
                         placement.getStandardPath())
                 .getModifiedBoard(element -> element
-                                .getWithChangedId(element.id() | (1 << nr)),
+                                .getWithChangedId(element.id() | id),
                         placement.getNeighbourhoodOfStandardPath());
     }
 
-    public static Match create(Player player1, Player player2) {
-        player1.placementsBoard = getBoardWithShipsPlaced(player1);
-        player2.placementsBoard = getBoardWithShipsPlaced(player2);
-
-        player1.shotsBoard = player2
-                .placementsBoard
-                .getModifiedBoard(element -> element.getWithChangedVisibility(false));
-
-        player2.shotsBoard = player1
-                .placementsBoard
-                .getModifiedBoard(element -> element.getWithChangedVisibility(false));
-
-        return new Match(player1, player2);
+    private static TheStateOfTheGame getStatus(Player player) {
+        for (int id : shipIds) {
+            if (!isShipSunk(id, player.placementsBoard)) {
+                return TheStateOfTheGame.PLAYING;
+            }
+        }
+        return TheStateOfTheGame.VICTORY;
     }
 
     private ShotResult shoot(Position position) {
@@ -83,31 +63,31 @@ public class Match {
                             .getWithChangedVisibility(true), position);
             return ShotResult.MISS;
         }
-
+        markPartOfTheShipAsShot(position, currentPlayer);
+        destroyPartOfTheShip(position, anotherPlayer);
         int id = boardElement.id();
-        Position[] shipPositions = currentPlayer
-                .shotsBoard
+        if (!isShipSunk(id, anotherPlayer.placementsBoard)) {
+            return ShotResult.HIT;
+        }
+        uncoverSurroundingWaters(id, currentPlayer);
+        return ShotResult.SUNK;
+    }
+
+    private static boolean isShipSunk(int id, Board board) {
+        Position[] shipPositions = board
                 .getPositionsOfAllElementsSatisfying(element -> element.id() == id);
 
         BoardElement currentElement;
         for (Position shipPosition : shipPositions) {
 
-            currentElement = currentPlayer
-                    .shotsBoard
+            currentElement = board
                     .getElementByPosition(shipPosition);
 
-            if (shipPosition != position && currentElement.part() == Part.SHIP) {
-                destroyPartOfTheShip(position);
-                return ShotResult.HIT;
+            if (currentElement.part() == Part.SHIP) {
+                return false;
             }
         }
-
-        destroyPartOfTheShip(position);
-        Position[] positionsAroundTheShip = currentPlayer
-                .shotsBoard
-                .getPositionsOfAllElementsSatisfying(element -> (element.id() & id) != 0);
-        uncoverSurroundingWaters(positionsAroundTheShip);
-        return ShotResult.SUNK;
+        return true;
     }
 
     private void swapPlayers() {
@@ -116,49 +96,44 @@ public class Match {
         anotherPlayer = temp;
     }
 
-    private void uncoverSurroundingWaters(Position[] positions) {
-        currentPlayer.shotsBoard = currentPlayer
+    private static void uncoverSurroundingWaters(int id, Player player) {
+        Position[] positionsAroundTheShip = player
                 .shotsBoard
-                .getModifiedBoard(element -> element.getWithChangedVisibility(true), positions);
+                .getPositionsOfAllElementsSatisfying(element -> (element.id() & id) != 0);
+        player.shotsBoard = player
+                .shotsBoard
+                .getModifiedBoard(element -> element.getWithChangedVisibility(true), positionsAroundTheShip);
     }
 
-    private void destroyPartOfTheShip(Position position) {
-        currentPlayer.shotsBoard = currentPlayer
+    private static void markPartOfTheShipAsShot(Position position, Player player) {
+        player.shotsBoard = player
                 .shotsBoard
                 .getModifiedBoard(element -> element
                         .getWithChangedPart(Part.WRECK)
                         .getWithChangedVisibility(true), position);
-        anotherPlayer.placementsBoard = anotherPlayer
-                .placementsBoard
-                .getModifiedBoard(element -> element.getWithChangedPart(Part.WRECK));
     }
 
-
-    private TheStateOfTheGame getStatus() {
-        for (int nr = 0; nr < shipCounts.length; nr++) {
-            if (!isShipSunk(nr)) {
-                return TheStateOfTheGame.PLAYING;
-            }
-        }
-        return TheStateOfTheGame.VICTORY;
+    private static void destroyPartOfTheShip(Position position, Player player) {
+        player.placementsBoard = player
+                .placementsBoard
+                .getModifiedBoard(element -> element.getWithChangedPart(Part.WRECK), position);
     }
 
-    private boolean isShipSunk(int nr) {
-        if (nr < 0) {
-            throw new IllegalArgumentException("Ship number needs to be an unsigned integer");
-        }
-        int id = 1 << nr;
-        Position[] shipPositions = currentPlayer
+    public static Match create(Player player1, Player player2) {
+        player1.placementsBoard = getBoardWithShipsPlaced(player1);
+        player1.confirmPlacingAllShips();
+        player2.placementsBoard = getBoardWithShipsPlaced(player2);
+        player2.confirmPlacingAllShips();
+
+        player1.shotsBoard = player2
                 .placementsBoard
-                .getPositionsOfAllElementsSatisfying(element -> element.id() == id);
-        BoardElement currentElement;
-        for (Position shipPosition : shipPositions) {
-            currentElement = currentPlayer.placementsBoard.getElementByPosition(shipPosition);
-            if (currentElement.part() != Part.WRECK) {
-                return false;
-            }
-        }
-        return true;
+                .getModifiedBoard(element -> element.getWithChangedVisibility(false));
+
+        player2.shotsBoard = player1
+                .placementsBoard
+                .getModifiedBoard(element -> element.getWithChangedVisibility(false));
+
+        return new Match(player1, player2);
     }
 
     public void play() {
@@ -168,7 +143,7 @@ public class Match {
             currentPlayer.confirmShot(result, shotPosition);
             anotherPlayer.confirmDamage(result, shotPosition);
             swapPlayers();
-        } while (getStatus() == TheStateOfTheGame.PLAYING);
+        } while (getStatus(currentPlayer) == TheStateOfTheGame.PLAYING);
         System.out.println("Player " + anotherPlayer.getName() + " won!");
     }
 }

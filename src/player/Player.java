@@ -18,10 +18,14 @@ public abstract class Player {
     }
 
     public abstract BoundVector supplyShipPlacement(int size, Board target);
+    
+    public abstract void confirmPlacingAllShips();
 
     public abstract Position supplyShotPosition();
 
     public abstract void confirmShot(ShotResult result, Position positionOfShot);
 
     public abstract void confirmDamage(ShotResult result, Position positionOfShot);
+    
+    
 }

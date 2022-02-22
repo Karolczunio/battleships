@@ -74,7 +74,7 @@ public record BoundVector(Position origin, Position destination) {
                     break;
                 }
             }
-            if (saveValue){
+            if (saveValue) {
                 result[index] = tested;
                 index++;
             }
@@ -92,9 +92,20 @@ public record BoundVector(Position origin, Position destination) {
     }
 
     public static BoundVector getRandomOrthogonalBoundVector(int lowerXBound, int upperXBound, int lowerYBound, int upperYBound, int size) {
-        Position origin = Position.getRandomPosition(lowerXBound, upperXBound, lowerYBound, upperYBound);
-        Position destination = Position.getRandomPosition(origin, origin.x() - size, origin.x() + size, origin.y() - size, origin.y() + size);
-        return new BoundVector(origin, destination);
+        if (lowerXBound > upperXBound || lowerYBound > upperYBound) {
+            throw new IllegalArgumentException("Invalid bounds");
+        }
+        if (size > upperXBound - lowerXBound + 1 && size > upperYBound - lowerYBound + 1) {
+            throw new IllegalArgumentException("Requested bound vector size is to large");
+        }
+        Position origin, destination;
+        BoundVector result;
+        do {
+            origin = Position.getRandomPosition(lowerXBound, upperXBound, lowerYBound, upperYBound);
+            destination = Position.getRandomPosition(origin, lowerXBound, upperXBound, lowerYBound, upperYBound);
+            result = new BoundVector(origin, destination);
+        } while (result.getFreeVector().distance() + 1 != size);
+        return result;
     }
 
     /**

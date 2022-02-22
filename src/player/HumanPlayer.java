@@ -7,15 +7,13 @@ import navigation.Position;
 import java.util.Scanner;
 
 public class HumanPlayer extends Player {
-    static int shipNR = 0;
-final static String[] placements = {"a1e1", "g1g1", "i1i1", "d5d5", "i5i7", "b7b9", "f10i10"};
     public HumanPlayer(String name) {
         super(name);
     }
 
     @Override
     public BoundVector supplyShipPlacement(int size, Board target) {
-        /*Scanner keyboard = new Scanner(System.in);
+        Scanner keyboard = new Scanner(System.in);
         String inputText;
         String promptMessage = "Enter positions of both ends of the " + size + "-tiled ship: ";
         String errorMessage = "Invalid ship placement!";
@@ -28,8 +26,13 @@ final static String[] placements = {"a1e1", "g1g1", "i1i1", "d5d5", "i5i7", "b7b
             System.out.print(promptMessage);
             inputText = keyboard.nextLine();
         }
-        return Helper.getBoundVector(inputText);*/
-        return Helper.getBoundVector(placements[shipNR++]);
+        return Helper.getBoundVector(inputText);
+    }
+
+    @Override
+    public void confirmPlacingAllShips() {
+        System.out.println(this.placementsBoard);
+        System.out.println("USER PLACED ALL SHIPS");
     }
 
     @Override
@@ -58,7 +61,7 @@ final static String[] placements = {"a1e1", "g1g1", "i1i1", "d5d5", "i5i7", "b7b
 
     @Override
     public void confirmDamage(ShotResult result, Position positionOfShot) {
-        System.out.println("You shot at: " + positionOfShot);
+        System.out.println("Enemy shot at: " + positionOfShot);
         System.out.println(placementsBoard);
         System.out.println(result.name());
     }

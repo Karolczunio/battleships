@@ -39,8 +39,7 @@ public class Helper {
         Position[] path = placement.getStandardPath();
         Position[] neighbourhood = placement.getNeighbourhoodOfStandardPath();
         for (Position position : path) {
-            System.out.println(position);
-            if (placementBoard.getElementByPosition(position).part() != Part.EMPTY) {
+            if (!placementBoard.isValidPosition(position) || placementBoard.getElementByPosition(position).part() != Part.EMPTY) {
                 return false;
             }
         }

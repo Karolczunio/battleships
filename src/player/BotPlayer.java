@@ -1,13 +1,10 @@
 package player;
 
 import boards.Board;
-import boards.BoardElement;
-import boards.Part;
 import navigation.BoundVector;
 import navigation.Position;
 
 import java.util.Random;
-import java.util.Scanner;
 
 public class BotPlayer extends Player {
 
@@ -22,6 +19,11 @@ public class BotPlayer extends Player {
             boundVector = BoundVector.getRandomOrthogonalBoundVector(0, 9, 0, 9, size);
         } while (!Helper.isValidShipPlacement(size, boundVector, target));
         return boundVector;
+    }
+
+    @Override
+    public void confirmPlacingAllShips() {
+        System.out.println("BOT PLACED ALL SHIPS");
     }
 
     @Override

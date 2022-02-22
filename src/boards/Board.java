@@ -3,6 +3,8 @@ package boards;
 import navigation.Position;
 
 import java.util.Arrays;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 public class Board {
     private final static int x = 10;
@@ -68,7 +70,7 @@ public class Board {
         return contents[where.y()][where.x()];
     }
 
-    public Position[] getPositionsOfAllElementsSatisfying(BoardElementTester tester) {
+    public Position[] getPositionsOfAllElementsSatisfying(Predicate<BoardElement> tester) {
         Position[] positions = getAllValidPositions();
         Position[] area = new Position[positions.length];
         int index = 0;
@@ -81,17 +83,17 @@ public class Board {
         return Arrays.copyOf(area, index);
     }
 
-    public Board getModifiedBoard(BoardElementTransformer transformer, Position... places) {
+    public Board getModifiedBoard(UnaryOperator<BoardElement> transformer, Position... places) {
         BoardElement[][] copy = getContents();
         for (Position place : places) {
             if (isValidPosition(place)) {
-                copy[place.y()][place.x()] = transformer.change(copy[place.y()][place.x()]);
+                copy[place.y()][place.x()] = transformer.apply(copy[place.y()][place.x()]);
             }
         }
         return new Board(copy);
     }
 
-    public Board getModifiedBoard(BoardElementTransformer transformer) {
+    public Board getModifiedBoard(UnaryOperator<BoardElement> transformer) {
         Position[] places = getAllValidPositions();
         return getModifiedBoard(transformer, places);
     }
